@@ -52,6 +52,7 @@ async function getDiff(
     pull_number,
     mediaType: { format: "diff" },
   });
+  console.log("Diff:", JSON.stringify(response.data))
   // @ts-expect-error - response.data is a string
   return response.data;
 }
@@ -67,6 +68,7 @@ async function analyzeCode(
     for (const chunk of file.chunks) {
       const prompt = createPrompt(file, chunk, prDetails);
       const aiResponse = await getAIResponse(prompt);
+      console.log("aiResponse:", JSON.stringify(aiResponse))
       if (aiResponse) {
         const newComments = createComment(file, chunk, aiResponse);
         if (newComments) {
