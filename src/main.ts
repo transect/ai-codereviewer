@@ -80,7 +80,7 @@ async function analyzeCode(
 }
 
 function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
-  const transectPrompt = readFileSync('./transect_prompt.txt', 'utf-8');
+  const transectPrompt = readFileSync('transect_prompt.txt', 'utf-8');
   const chatGPTPrompt = `${transectPrompt}
 
 Review the following code diff in the file "${
