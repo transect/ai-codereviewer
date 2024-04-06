@@ -107,7 +107,8 @@ function analyzeCode(parsedDiff, prDetails) {
     });
 }
 function createPrompt(file, chunk, prDetails) {
-    const transectPrompt = (0, fs_1.readFileSync)('./transect_prompt.txt', 'utf-8');
+    const path = __nccwpck_require__(1017);
+    const transectPrompt = (0, fs_1.readFileSync)(path.join(__dirname, 'transect_prompt.txt'), 'utf-8');
     const chatGPTPrompt = `${transectPrompt}
 
 Review the following code diff in the file "${file.to}" and take the pull request title and description into account when writing the response.
