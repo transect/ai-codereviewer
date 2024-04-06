@@ -52,7 +52,6 @@ async function getDiff(
     pull_number,
     mediaType: { format: "diff" },
   });
-  console.log("Diff:", JSON.stringify(response.data))
   // @ts-expect-error - response.data is a string
   return response.data;
 }
@@ -81,13 +80,8 @@ async function analyzeCode(
 }
 
 function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
-  return `Your task is to review pull requests. Instructions:
-- Provide the response in following JSON format:  {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
-- Do not give positive comments or compliments.
-- Provide comments and suggestions ONLY if there is something to improve, otherwise "reviews" should be an empty array.
-- Write the comment in GitHub Markdown format.
-- Use the given description only for the overall context and only comment the code.
-- IMPORTANT: NEVER suggest adding comments to the code.
+  const transectPrompt = readFileSync('./transect_prompt.txt', 'utf-8');
+  const chatGPTPrompt = `${transectPrompt}
 
 Review the following code diff in the file "${
     file.to
@@ -110,6 +104,8 @@ ${chunk.changes
   .join("\n")}
 \`\`\`
 `;
+  console.log("chatGPTPrompt:", chatGPTPrompt);
+  return chatGPTPrompt;
 }
 
 async function getAIResponse(prompt: string): Promise<Array<{
