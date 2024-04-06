@@ -174,6 +174,7 @@ async function createReviewComment(
   pull_number: number,
   comments: Array<{ body: string; path: string; line: number }>
 ): Promise<void> {
+  // TODO: change event to "APPROVE" or "REJECT" based on comments amount?
   await octokit.pulls.createReview({
     owner,
     repo,

@@ -81,6 +81,7 @@ function getDiff(owner, repo, pull_number) {
             pull_number,
             mediaType: { format: "diff" },
         });
+        console.log("Diff:", JSON.stringify(response.data));
         // @ts-expect-error - response.data is a string
         return response.data;
     });
@@ -94,6 +95,7 @@ function analyzeCode(parsedDiff, prDetails) {
             for (const chunk of file.chunks) {
                 const prompt = createPrompt(file, chunk, prDetails);
                 const aiResponse = yield getAIResponse(prompt);
+                console.log("aiResponse:", JSON.stringify(aiResponse));
                 if (aiResponse) {
                     const newComments = createComment(file, chunk, aiResponse);
                     if (newComments) {
@@ -177,6 +179,7 @@ function createComment(file, chunk, aiResponses) {
 }
 function createReviewComment(owner, repo, pull_number, comments) {
     return __awaiter(this, void 0, void 0, function* () {
+        // TODO: change event to "APPROVE" or "REJECT" based on comments amount?
         yield octokit.pulls.createReview({
             owner,
             repo,
@@ -192,22 +195,21 @@ function main() {
         const prDetails = yield getPRDetails();
         let diff;
         const eventData = JSON.parse((0, fs_1.readFileSync)((_a = process.env.GITHUB_EVENT_PATH) !== null && _a !== void 0 ? _a : "", "utf8"));
-        if (eventData.action === "opened") {
+        if (eventData.action === "opened" || eventData.action === "synchronize") {
             diff = yield getDiff(prDetails.owner, prDetails.repo, prDetails.pull_number);
-        }
-        else if (eventData.action === "synchronize") {
-            const newBaseSha = eventData.before;
-            const newHeadSha = eventData.after;
-            const response = yield octokit.repos.compareCommits({
-                headers: {
-                    accept: "application/vnd.github.v3.diff",
-                },
-                owner: prDetails.owner,
-                repo: prDetails.repo,
-                base: newBaseSha,
-                head: newHeadSha,
-            });
-            diff = String(response.data);
+            // } else if (eventData.action === "synchronize") {
+            //   const newBaseSha = eventData.before;
+            //   const newHeadSha = eventData.after;
+            //   const response = await octokit.repos.compareCommits({
+            //     headers: {
+            //       accept: "application/vnd.github.v3.diff",
+            //     },
+            //     owner: prDetails.owner,
+            //     repo: prDetails.repo,
+            //     base: newBaseSha,
+            //     head: newHeadSha,
+            //   });
+            //   diff = String(response.data);
         }
         else {
             console.log("Unsupported event:", process.env.GITHUB_EVENT_NAME);
