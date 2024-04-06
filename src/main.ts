@@ -188,27 +188,27 @@ async function main() {
     readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8")
   );
 
-  if (eventData.action === "opened") {
+  if (eventData.action === "opened" || eventData.action === "synchronize") {
     diff = await getDiff(
       prDetails.owner,
       prDetails.repo,
       prDetails.pull_number
     );
-  } else if (eventData.action === "synchronize") {
-    const newBaseSha = eventData.before;
-    const newHeadSha = eventData.after;
+  // } else if (eventData.action === "synchronize") {
+  //   const newBaseSha = eventData.before;
+  //   const newHeadSha = eventData.after;
 
-    const response = await octokit.repos.compareCommits({
-      headers: {
-        accept: "application/vnd.github.v3.diff",
-      },
-      owner: prDetails.owner,
-      repo: prDetails.repo,
-      base: newBaseSha,
-      head: newHeadSha,
-    });
+  //   const response = await octokit.repos.compareCommits({
+  //     headers: {
+  //       accept: "application/vnd.github.v3.diff",
+  //     },
+  //     owner: prDetails.owner,
+  //     repo: prDetails.repo,
+  //     base: newBaseSha,
+  //     head: newHeadSha,
+  //   });
 
-    diff = String(response.data);
+  //   diff = String(response.data);
   } else {
     console.log("Unsupported event:", process.env.GITHUB_EVENT_NAME);
     return;
