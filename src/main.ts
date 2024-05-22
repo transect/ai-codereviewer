@@ -177,7 +177,7 @@ async function createReviewComment(
   comments: Array<{ body: string; path: string; line: number }>
 ): Promise<void> {
   // TODO: change event to "APPROVE" or "REJECT" based on comments amount?
-  try {
+  if (comments.length > 0) {
     await octokit.pulls.createReview({
       owner,
       repo,
@@ -185,11 +185,6 @@ async function createReviewComment(
       comments,
       event: "COMMENT",
     });
-  } catch (error) {
-    console.error("Error creating the comment:", error);
-    if ((error as any).data) {
-      console.error(JSON.stringify((error as any).data));
-    }
   }
 }
 
@@ -246,12 +241,31 @@ async function main() {
 
   const comments = await analyzeCode(filteredDiff, prDetails);
   if (comments.length > 0) {
-    await createReviewComment(
-      prDetails.owner,
-      prDetails.repo,
-      prDetails.pull_number,
-      comments
-    );
+    try {
+      await createReviewComment(
+        prDetails.owner,
+        prDetails.repo,
+        prDetails.pull_number,
+        comments
+      );
+    } catch (error) {
+      let batches = Math.ceil(comments.length / 10);
+      for (let i = 0; i <= batches; i++) {
+        try {
+          await createReviewComment(
+            prDetails.owner,
+            prDetails.repo,
+            prDetails.pull_number,
+            comments.slice(i * 10, i * 10 + 10)
+          );
+        } catch (error) {
+          console.error("Error creating the comment:", error);
+          if ((error as any).data) {
+            console.log("Error data:", (error as any).data);
+          }
+        }
+      }
+    }
   }
 }
 

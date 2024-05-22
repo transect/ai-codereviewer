@@ -182,7 +182,7 @@ function createComment(file, chunk, aiResponses) {
 function createReviewComment(owner, repo, pull_number, comments) {
     return __awaiter(this, void 0, void 0, function* () {
         // TODO: change event to "APPROVE" or "REJECT" based on comments amount?
-        try {
+        if (comments.length > 0) {
             yield octokit.pulls.createReview({
                 owner,
                 repo,
@@ -190,12 +190,6 @@ function createReviewComment(owner, repo, pull_number, comments) {
                 comments,
                 event: "COMMENT",
             });
-        }
-        catch (error) {
-            console.error("Error creating the comment:", error);
-            if (error.data) {
-                console.error(JSON.stringify(error.data));
-            }
         }
     });
 }
@@ -238,7 +232,23 @@ function main() {
         });
         const comments = yield analyzeCode(filteredDiff, prDetails);
         if (comments.length > 0) {
-            yield createReviewComment(prDetails.owner, prDetails.repo, prDetails.pull_number, comments);
+            try {
+                yield createReviewComment(prDetails.owner, prDetails.repo, prDetails.pull_number, comments);
+            }
+            catch (error) {
+                let batches = Math.ceil(comments.length / 10);
+                for (let i = 0; i <= batches; i++) {
+                    try {
+                        yield createReviewComment(prDetails.owner, prDetails.repo, prDetails.pull_number, comments.slice(i * 10, i * 10 + 10));
+                    }
+                    catch (error) {
+                        console.error("Error creating the comment:", error);
+                        if (error.data) {
+                            console.log("Error data:", error.data);
+                        }
+                    }
+                }
+            }
         }
     });
 }
