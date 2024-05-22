@@ -145,7 +145,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
     console.log("res:", res);
     return JSON.parse(res).reviews;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error analyzing the code:", error);
     return null;
   }
 }
@@ -177,13 +177,20 @@ async function createReviewComment(
   comments: Array<{ body: string; path: string; line: number }>
 ): Promise<void> {
   // TODO: change event to "APPROVE" or "REJECT" based on comments amount?
-  await octokit.pulls.createReview({
-    owner,
-    repo,
-    pull_number,
-    comments,
-    event: "COMMENT",
-  });
+  try {
+    await octokit.pulls.createReview({
+      owner,
+      repo,
+      pull_number,
+      comments,
+      event: "COMMENT",
+    });
+  } catch (error) {
+    console.error("Error creating the comment:", error);
+    if ((error as any).data) {
+      console.error(JSON.stringify((error as any).data));
+    }
+  }
 }
 
 async function main() {

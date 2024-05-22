@@ -162,7 +162,7 @@ function getAIResponse(prompt) {
             return JSON.parse(res).reviews;
         }
         catch (error) {
-            console.error("Error:", error);
+            console.error("Error analyzing the code:", error);
             return null;
         }
     });
@@ -182,13 +182,21 @@ function createComment(file, chunk, aiResponses) {
 function createReviewComment(owner, repo, pull_number, comments) {
     return __awaiter(this, void 0, void 0, function* () {
         // TODO: change event to "APPROVE" or "REJECT" based on comments amount?
-        yield octokit.pulls.createReview({
-            owner,
-            repo,
-            pull_number,
-            comments,
-            event: "COMMENT",
-        });
+        try {
+            yield octokit.pulls.createReview({
+                owner,
+                repo,
+                pull_number,
+                comments,
+                event: "COMMENT",
+            });
+        }
+        catch (error) {
+            console.error("Error creating the comment:", error);
+            if (error.data) {
+                console.error(JSON.stringify(error.data));
+            }
+        }
     });
 }
 function main() {
