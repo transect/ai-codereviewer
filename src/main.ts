@@ -24,22 +24,22 @@ interface PRDetails {
 }
 
 async function getPRDetails(): Promise<PRDetails> {
-  const { repository, number } = JSON.parse(
+  const { repository, issue } = JSON.parse(
     readFileSync(process.env.GITHUB_EVENT_PATH || "", "utf8")
   );
-  console.log(JSON.parse(
-    readFileSync(process.env.GITHUB_EVENT_PATH || "", "utf8")
-  ));
-  console.log(process.env);
+  // console.log(JSON.parse(
+  //   readFileSync(process.env.GITHUB_EVENT_PATH || "", "utf8")
+  // ));
+  // console.log(process.env);
   const prResponse = await octokit.pulls.get({
     owner: repository.owner.login,
     repo: repository.name,
-    pull_number: number,
+    pull_number: issue.number,
   });
   return {
     owner: repository.owner.login,
     repo: repository.name,
-    pull_number: number,
+    pull_number: issue.number,
     title: prResponse.data.title ?? "",
     description: prResponse.data.body ?? "",
   };
@@ -188,11 +188,11 @@ async function createReviewComment(
 async function main() {
   const prDetails = await getPRDetails();
   let diff: string | null;
-  const eventData = JSON.parse(
-    readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8")
+  const { comment } = JSON.parse(
+    readFileSync(process.env.GITHUB_EVENT_PATH || "", "utf8")
   );
 
-  if (eventData.action === "opened" || eventData.action === "synchronize") {
+  if (comment.body.includes("/ai-review")) {
     diff = await getDiff(
       prDetails.owner,
       prDetails.repo,

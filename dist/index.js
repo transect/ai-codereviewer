@@ -58,18 +58,20 @@ const openai = new openai_1.default({
 function getPRDetails() {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b;
-        const { repository, number } = JSON.parse((0, fs_1.readFileSync)(process.env.GITHUB_EVENT_PATH || "", "utf8"));
-        console.log(JSON.parse((0, fs_1.readFileSync)(process.env.GITHUB_EVENT_PATH || "", "utf8")));
-        console.log(process.env);
+        const { repository, issue } = JSON.parse((0, fs_1.readFileSync)(process.env.GITHUB_EVENT_PATH || "", "utf8"));
+        // console.log(JSON.parse(
+        //   readFileSync(process.env.GITHUB_EVENT_PATH || "", "utf8")
+        // ));
+        // console.log(process.env);
         const prResponse = yield octokit.pulls.get({
             owner: repository.owner.login,
             repo: repository.name,
-            pull_number: number,
+            pull_number: issue.number,
         });
         return {
             owner: repository.owner.login,
             repo: repository.name,
-            pull_number: number,
+            pull_number: issue.number,
             title: (_a = prResponse.data.title) !== null && _a !== void 0 ? _a : "",
             description: (_b = prResponse.data.body) !== null && _b !== void 0 ? _b : "",
         };
@@ -190,11 +192,10 @@ function createReviewComment(owner, repo, pull_number, comments) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
         const prDetails = yield getPRDetails();
         let diff;
-        const eventData = JSON.parse((0, fs_1.readFileSync)((_a = process.env.GITHUB_EVENT_PATH) !== null && _a !== void 0 ? _a : "", "utf8"));
-        if (eventData.action === "opened" || eventData.action === "synchronize") {
+        const { comment } = JSON.parse((0, fs_1.readFileSync)(process.env.GITHUB_EVENT_PATH || "", "utf8"));
+        if (comment.body.includes("/ai-review")) {
             diff = yield getDiff(prDetails.owner, prDetails.repo, prDetails.pull_number);
             // } else if (eventData.action === "synchronize") {
             //   const newBaseSha = eventData.before;
