@@ -130,7 +130,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
     const response = await openai.chat.completions.create({
       ...queryConfig,
       // return JSON if the model supports it:
-      ...(OPENAI_API_MODEL === "gpt-4-1106-preview"
+      ...(OPENAI_API_MODEL.includes("gpt-4")
         ? { response_format: { type: "json_object" } }
         : {}),
       messages: [
@@ -142,6 +142,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
     });
 
     const res = response.choices[0].message?.content?.trim() || "{}";
+    console.log("res:", res);
     return JSON.parse(res).reviews;
   } catch (error) {
     console.error("Error:", error);
