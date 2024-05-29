@@ -169,13 +169,12 @@ function sendAssistantPrompt(prompt) {
         console.log('Created thread with Id: ' + threadId);
         const run = yield openai.beta.threads.runs.createAndPoll(thread.id, {
             assistant_id: assistantId,
-            // additional_instructions: 'Please address the user as Jane Doe. The user has a premium account.',
+            additional_instructions: 'Only respond with code as plain text without code block syntax around it.',
         });
         console.log('Run finished with status: ' + run.status);
         if (run.status == 'completed') {
             const messages = yield openai.beta.threads.messages.list(thread.id);
             const message = (_a = messages.getPaginatedItems()[0]) === null || _a === void 0 ? void 0 : _a.content[0];
-            console.log('Message:', message);
             if ((message === null || message === void 0 ? void 0 : message.type) === 'text') {
                 const message_value = ((_c = (_b = message === null || message === void 0 ? void 0 : message.text) === null || _b === void 0 ? void 0 : _b.value) === null || _c === void 0 ? void 0 : _c.trim()) || "{}";
                 console.log('Message value:', message_value);

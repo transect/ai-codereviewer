@@ -150,7 +150,7 @@ async function sendAssistantPrompt(prompt: string) {
   const run = await openai.beta.threads.runs.createAndPoll(
     thread.id, {
     assistant_id: assistantId,
-    // additional_instructions: 'Please address the user as Jane Doe. The user has a premium account.',
+    additional_instructions: 'Only respond with code as plain text without code block syntax around it.',
   });
 
   console.log('Run finished with status: ' + run.status);
@@ -158,7 +158,6 @@ async function sendAssistantPrompt(prompt: string) {
   if (run.status == 'completed') {
     const messages = await openai.beta.threads.messages.list(thread.id);
     const message = messages.getPaginatedItems()[0]?.content[0]
-    console.log('Message:', message);
     if (message?.type === 'text') {
       const message_value =  message?.text?.value?.trim() || "{}";
       console.log('Message value:', message_value);
