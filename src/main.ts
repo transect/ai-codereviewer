@@ -157,10 +157,12 @@ async function sendAssistantPrompt(prompt: string) {
 
   if (run.status == 'completed') {
     const messages = await openai.beta.threads.messages.list(thread.id);
-    console.log('Messages:', messages.getPaginatedItems()[0]);
     const message = messages.getPaginatedItems()[0]?.content[0]
+    console.log('Message:', message);
     if (message?.type === 'text') {
-      return message?.text?.value?.toString()?.trim() || "{}";
+      const message_value =  message?.text?.value?.trim() || "{}";
+      console.log('Message value:', message_value);
+      return message_value;
     } else {
       throw new Error('Assistant returned the wrong message type: ' + message.type + ' instead of text');
     }
