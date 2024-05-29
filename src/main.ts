@@ -70,8 +70,9 @@ async function analyzeCode(
   for (const file of parsedDiff) {
     if (file.to === "/dev/null") continue; // Ignore deleted files
     for (const chunk of file.chunks) {
-      const prompt = createPrompt(file, chunk, prDetails);
-      const aiResponse = await getAIResponse(prompt);
+      const useAssistantAPI = true
+      const prompt = createPrompt(file, chunk, prDetails, useAssistantAPI);
+      const aiResponse = await getAIResponse(prompt, useAssistantAPI);
       console.log("aiResponse:", JSON.stringify(aiResponse))
       if (aiResponse) {
         const newComments = createComment(file, chunk, aiResponse);
@@ -84,9 +85,9 @@ async function analyzeCode(
   return comments;
 }
 
-function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
+function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails, useAssistantAPI: Boolean): string {
   const path = require('path');
-  const transectPrompt = readFileSync(path.join(__dirname, 'transect_prompt.txt'), 'utf-8');
+  const transectPrompt = useAssistantAPI ? '' : readFileSync(path.join(__dirname, 'transect_prompt.txt'), 'utf-8');
   const chatGPTPrompt = `${transectPrompt}
 
 Review the following code diff in the file "${
@@ -114,16 +115,15 @@ ${chunk.changes
   return chatGPTPrompt;
 }
 
-async function getAIResponse(prompt: string): Promise<Array<{
+async function getAIResponse(prompt: string, useAssistantAPI: boolean): Promise<Array<{
   lineNumber: string;
   reviewComment: string;
 }> | null> {
 
   try {
-    // const content = false ? await sendCompletionsPrompt(prompt) : await sendAssistantPrompt(prompt);
-    const content = await sendAssistantPrompt(prompt);
+    const content = useAssistantAPI ? await sendAssistantPrompt(prompt): await sendCompletionsPrompt(prompt);
     
-    console.log("res:", content);
+    console.log("res:", JSON.parse(content));
     return JSON.parse(content).reviews;
   } catch (error) {
     console.error("Error analyzing the code:", error);

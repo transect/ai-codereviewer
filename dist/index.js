@@ -97,8 +97,9 @@ function analyzeCode(parsedDiff, prDetails) {
             if (file.to === "/dev/null")
                 continue; // Ignore deleted files
             for (const chunk of file.chunks) {
-                const prompt = createPrompt(file, chunk, prDetails);
-                const aiResponse = yield getAIResponse(prompt);
+                const useAssistantAPI = true;
+                const prompt = createPrompt(file, chunk, prDetails, useAssistantAPI);
+                const aiResponse = yield getAIResponse(prompt, useAssistantAPI);
                 console.log("aiResponse:", JSON.stringify(aiResponse));
                 if (aiResponse) {
                     const newComments = createComment(file, chunk, aiResponse);
@@ -111,9 +112,9 @@ function analyzeCode(parsedDiff, prDetails) {
         return comments;
     });
 }
-function createPrompt(file, chunk, prDetails) {
+function createPrompt(file, chunk, prDetails, useAssistantAPI) {
     const path = __nccwpck_require__(1017);
-    const transectPrompt = (0, fs_1.readFileSync)(path.join(__dirname, 'transect_prompt.txt'), 'utf-8');
+    const transectPrompt = useAssistantAPI ? '' : (0, fs_1.readFileSync)(path.join(__dirname, 'transect_prompt.txt'), 'utf-8');
     const chatGPTPrompt = `${transectPrompt}
 
 Review the following code diff in the file "${file.to}" and take the pull request title and description into account when writing the response.
@@ -138,12 +139,11 @@ ${chunk.changes
     console.log("chatGPTPrompt:", chatGPTPrompt);
     return chatGPTPrompt;
 }
-function getAIResponse(prompt) {
+function getAIResponse(prompt, useAssistantAPI) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // const content = false ? await sendCompletionsPrompt(prompt) : await sendAssistantPrompt(prompt);
-            const content = yield sendAssistantPrompt(prompt);
-            console.log("res:", content);
+            const content = useAssistantAPI ? yield sendAssistantPrompt(prompt) : yield sendCompletionsPrompt(prompt);
+            console.log("res:", JSON.parse(content));
             return JSON.parse(content).reviews;
         }
         catch (error) {
