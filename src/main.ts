@@ -8,6 +8,7 @@ import minimatch from "minimatch";
 const GITHUB_TOKEN: string = core.getInput("GITHUB_TOKEN");
 const OPENAI_API_KEY: string = core.getInput("OPENAI_API_KEY");
 const OPENAI_API_MODEL: string = core.getInput("OPENAI_API_MODEL");
+const OPENAI_ASSISTANT_ID: string = 'asst_9fxOXtnqzEBcYeiE6lparuFG';
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
@@ -117,6 +118,52 @@ async function getAIResponse(prompt: string): Promise<Array<{
   lineNumber: string;
   reviewComment: string;
 }> | null> {
+
+  try {
+    // const content = false ? await sendCompletionsPrompt(prompt) : await sendAssistantPrompt(prompt);
+    const content = await sendAssistantPrompt(prompt);
+    
+    console.log("res:", content);
+    return JSON.parse(content).reviews;
+  } catch (error) {
+    console.error("Error analyzing the code:", error);
+    return null;
+  }
+}
+
+async function sendAssistantPrompt(prompt: string) {
+  let assistantId = OPENAI_ASSISTANT_ID;
+  console.log('Fetched Assistant with Id: ' + assistantId);
+
+  const thread = await openai.beta.threads.create({
+    messages: [
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+  });
+
+  let threadId = thread.id;
+  console.log('Created thread with Id: ' + threadId);
+
+  const run = await openai.beta.threads.runs.createAndPoll(
+    thread.id, {
+    assistant_id: assistantId,
+    // additional_instructions: 'Please address the user as Jane Doe. The user has a premium account.',
+  });
+
+  console.log('Run finished with status: ' + run.status);
+
+  if (run.status == 'completed') {
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    return messages.getPaginatedItems()[0]?.toString().trim() || "{}";
+  } else {
+    throw new Error('Assistant run failed');
+  }
+}
+
+async function sendCompletionsPrompt(prompt: string) {
   const queryConfig = {
     model: OPENAI_API_MODEL,
     temperature: 0.2,
@@ -126,28 +173,21 @@ async function getAIResponse(prompt: string): Promise<Array<{
     presence_penalty: 0,
   };
 
-  try {
-    const response = await openai.chat.completions.create({
-      ...queryConfig,
-      // return JSON if the model supports it:
-      ...(OPENAI_API_MODEL.includes("gpt-4")
-        ? { response_format: { type: "json_object" } }
-        : {}),
-      messages: [
-        {
-          role: "system",
-          content: prompt,
-        },
-      ],
-    });
+  const response = await openai.chat.completions.create({
+    ...queryConfig,
+    // return JSON if the model supports it:
+    ...(OPENAI_API_MODEL.includes("gpt-4")
+      ? { response_format: { type: "json_object" } }
+      : {}),
+    messages: [
+      {
+        role: "system",
+        content: prompt,
+      },
+    ],
+  });
 
-    const res = response.choices[0].message?.content?.trim() || "{}";
-    console.log("res:", res);
-    return JSON.parse(res).reviews;
-  } catch (error) {
-    console.error("Error analyzing the code:", error);
-    return null;
-  }
+  return response.choices[0].message?.content?.trim() || "{}";
 }
 
 function createComment(

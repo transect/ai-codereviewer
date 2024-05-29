@@ -51,6 +51,7 @@ const minimatch_1 = __importDefault(__nccwpck_require__(2002));
 const GITHUB_TOKEN = core.getInput("GITHUB_TOKEN");
 const OPENAI_API_KEY = core.getInput("OPENAI_API_KEY");
 const OPENAI_API_MODEL = core.getInput("OPENAI_API_MODEL");
+const OPENAI_ASSISTANT_ID = 'asst_9fxOXtnqzEBcYeiE6lparuFG';
 const octokit = new rest_1.Octokit({ auth: GITHUB_TOKEN });
 const openai = new openai_1.default({
     apiKey: OPENAI_API_KEY,
@@ -139,6 +140,49 @@ ${chunk.changes
 }
 function getAIResponse(prompt) {
     return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // const content = false ? await sendCompletionsPrompt(prompt) : await sendAssistantPrompt(prompt);
+            const content = yield sendAssistantPrompt(prompt);
+            console.log("res:", content);
+            return JSON.parse(content).reviews;
+        }
+        catch (error) {
+            console.error("Error analyzing the code:", error);
+            return null;
+        }
+    });
+}
+function sendAssistantPrompt(prompt) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        let assistantId = OPENAI_ASSISTANT_ID;
+        console.log('Fetched Assistant with Id: ' + assistantId);
+        const thread = yield openai.beta.threads.create({
+            messages: [
+                {
+                    role: 'user',
+                    content: prompt,
+                },
+            ],
+        });
+        let threadId = thread.id;
+        console.log('Created thread with Id: ' + threadId);
+        const run = yield openai.beta.threads.runs.createAndPoll(thread.id, {
+            assistant_id: assistantId,
+            // additional_instructions: 'Please address the user as Jane Doe. The user has a premium account.',
+        });
+        console.log('Run finished with status: ' + run.status);
+        if (run.status == 'completed') {
+            const messages = yield openai.beta.threads.messages.list(thread.id);
+            return ((_a = messages.getPaginatedItems()[0]) === null || _a === void 0 ? void 0 : _a.toString().trim()) || "{}";
+        }
+        else {
+            throw new Error('Assistant run failed');
+        }
+    });
+}
+function sendCompletionsPrompt(prompt) {
+    return __awaiter(this, void 0, void 0, function* () {
         var _a, _b;
         const queryConfig = {
             model: OPENAI_API_MODEL,
@@ -148,23 +192,15 @@ function getAIResponse(prompt) {
             frequency_penalty: 0,
             presence_penalty: 0,
         };
-        try {
-            const response = yield openai.chat.completions.create(Object.assign(Object.assign(Object.assign({}, queryConfig), (OPENAI_API_MODEL.includes("gpt-4")
-                ? { response_format: { type: "json_object" } }
-                : {})), { messages: [
-                    {
-                        role: "system",
-                        content: prompt,
-                    },
-                ] }));
-            const res = ((_b = (_a = response.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.trim()) || "{}";
-            console.log("res:", res);
-            return JSON.parse(res).reviews;
-        }
-        catch (error) {
-            console.error("Error analyzing the code:", error);
-            return null;
-        }
+        const response = yield openai.chat.completions.create(Object.assign(Object.assign(Object.assign({}, queryConfig), (OPENAI_API_MODEL.includes("gpt-4")
+            ? { response_format: { type: "json_object" } }
+            : {})), { messages: [
+                {
+                    role: "system",
+                    content: prompt,
+                },
+            ] }));
+        return ((_b = (_a = response.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.trim()) || "{}";
     });
 }
 function createComment(file, chunk, aiResponses) {
