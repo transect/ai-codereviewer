@@ -174,6 +174,7 @@ function sendAssistantPrompt(prompt) {
         console.log('Run finished with status: ' + run.status);
         if (run.status == 'completed') {
             const messages = yield openai.beta.threads.messages.list(thread.id);
+            console.log('Messages:', messages.getPaginatedItems()[0]);
             return ((_a = messages.getPaginatedItems()[0]) === null || _a === void 0 ? void 0 : _a.toString().trim()) || "{}";
         }
         else {

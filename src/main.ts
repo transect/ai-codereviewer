@@ -157,6 +157,7 @@ async function sendAssistantPrompt(prompt: string) {
 
   if (run.status == 'completed') {
     const messages = await openai.beta.threads.messages.list(thread.id);
+    console.log('Messages:', messages.getPaginatedItems()[0]);
     return messages.getPaginatedItems()[0]?.toString().trim() || "{}";
   } else {
     throw new Error('Assistant run failed');
