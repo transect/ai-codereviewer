@@ -154,7 +154,7 @@ function getAIResponse(prompt, useAssistantAPI) {
 }
 function sendAssistantPrompt(prompt) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a;
+        var _a, _b, _c, _d;
         let assistantId = OPENAI_ASSISTANT_ID;
         console.log('Fetched Assistant with Id: ' + assistantId);
         const thread = yield openai.beta.threads.create({
@@ -175,7 +175,13 @@ function sendAssistantPrompt(prompt) {
         if (run.status == 'completed') {
             const messages = yield openai.beta.threads.messages.list(thread.id);
             console.log('Messages:', messages.getPaginatedItems()[0]);
-            return ((_a = messages.getPaginatedItems()[0]) === null || _a === void 0 ? void 0 : _a.toString().trim()) || "{}";
+            const message = (_a = messages.getPaginatedItems()[0]) === null || _a === void 0 ? void 0 : _a.content[0];
+            if ((message === null || message === void 0 ? void 0 : message.type) === 'text') {
+                return ((_d = (_c = (_b = message === null || message === void 0 ? void 0 : message.text) === null || _b === void 0 ? void 0 : _b.value) === null || _c === void 0 ? void 0 : _c.toString()) === null || _d === void 0 ? void 0 : _d.trim()) || "{}";
+            }
+            else {
+                throw new Error('Assistant returned the wrong message type: ' + message.type + ' instead of text');
+            }
         }
         else {
             throw new Error('Assistant run failed');
