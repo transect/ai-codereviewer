@@ -42697,7 +42697,7 @@ exports["default"] = isPlainObject;
 
 /***/ }),
 
-/***/ 5822:
+/***/ 7786:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -42910,7 +42910,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unescape = exports.escape = exports.Minimatch = exports.match = exports.makeRe = exports.braceExpand = exports.defaults = exports.filter = exports.GLOBSTAR = exports.sep = exports.minimatch = void 0;
 const brace_expansion_1 = __importDefault(__nccwpck_require__(3717));
-const brace_expressions_js_1 = __nccwpck_require__(5822);
+const brace_expressions_js_1 = __nccwpck_require__(7786);
 const escape_js_1 = __nccwpck_require__(9004);
 const unescape_js_1 = __nccwpck_require__(7305);
 const minimatch = (p, pattern, options = {}) => {
@@ -45360,6 +45360,7 @@ class APIError extends OpenAIError {
         super(`${APIError.makeMessage(status, error, message)}`);
         this.status = status;
         this.headers = headers;
+        this.request_id = headers?.['x-request-id'];
         const data = error;
         this.error = data;
         this.code = data?.['code'];
@@ -45528,7 +45529,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fileFromPath = exports.toFile = exports.UnprocessableEntityError = exports.PermissionDeniedError = exports.InternalServerError = exports.AuthenticationError = exports.BadRequestError = exports.RateLimitError = exports.ConflictError = exports.NotFoundError = exports.APIUserAbortError = exports.APIConnectionTimeoutError = exports.APIConnectionError = exports.APIError = exports.OpenAIError = exports.OpenAI = void 0;
+exports.AzureOpenAI = exports.fileFromPath = exports.toFile = exports.UnprocessableEntityError = exports.PermissionDeniedError = exports.InternalServerError = exports.AuthenticationError = exports.BadRequestError = exports.RateLimitError = exports.ConflictError = exports.NotFoundError = exports.APIUserAbortError = exports.APIConnectionTimeoutError = exports.APIConnectionError = exports.APIError = exports.OpenAIError = exports.OpenAI = void 0;
 const Core = __importStar(__nccwpck_require__(1798));
 const Errors = __importStar(__nccwpck_require__(8905));
 const Uploads = __importStar(__nccwpck_require__(6800));
@@ -45541,6 +45542,7 @@ class OpenAI extends Core.APIClient {
      *
      * @param {string | undefined} [opts.apiKey=process.env['OPENAI_API_KEY'] ?? undefined]
      * @param {string | null | undefined} [opts.organization=process.env['OPENAI_ORG_ID'] ?? null]
+     * @param {string | null | undefined} [opts.project=process.env['OPENAI_PROJECT_ID'] ?? null]
      * @param {string} [opts.baseURL=process.env['OPENAI_BASE_URL'] ?? https://api.openai.com/v1] - Override the default base URL for the API.
      * @param {number} [opts.timeout=10 minutes] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
      * @param {number} [opts.httpAgent] - An HTTP agent used to manage HTTP(s) connections.
@@ -45550,13 +45552,14 @@ class OpenAI extends Core.APIClient {
      * @param {Core.DefaultQuery} opts.defaultQuery - Default query parameters to include with every request to the API.
      * @param {boolean} [opts.dangerouslyAllowBrowser=false] - By default, client-side use of this library is not allowed, as it risks exposing your secret API credentials to attackers.
      */
-    constructor({ baseURL = Core.readEnv('OPENAI_BASE_URL'), apiKey = Core.readEnv('OPENAI_API_KEY'), organization = Core.readEnv('OPENAI_ORG_ID') ?? null, ...opts } = {}) {
+    constructor({ baseURL = Core.readEnv('OPENAI_BASE_URL'), apiKey = Core.readEnv('OPENAI_API_KEY'), organization = Core.readEnv('OPENAI_ORG_ID') ?? null, project = Core.readEnv('OPENAI_PROJECT_ID') ?? null, ...opts } = {}) {
         if (apiKey === undefined) {
             throw new Errors.OpenAIError("The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).");
         }
         const options = {
             apiKey,
             organization,
+            project,
             ...opts,
             baseURL: baseURL || `https://api.openai.com/v1`,
         };
@@ -45580,9 +45583,11 @@ class OpenAI extends Core.APIClient {
         this.models = new API.Models(this);
         this.fineTuning = new API.FineTuning(this);
         this.beta = new API.Beta(this);
+        this.batches = new API.Batches(this);
         this._options = options;
         this.apiKey = apiKey;
         this.organization = organization;
+        this.project = project;
     }
     defaultQuery() {
         return this._options.defaultQuery;
@@ -45591,6 +45596,7 @@ class OpenAI extends Core.APIClient {
         return {
             ...super.defaultHeaders(opts),
             'OpenAI-Organization': this.organization,
+            'OpenAI-Project': this.project,
             ...this._options.defaultHeaders,
         };
     }
@@ -45614,13 +45620,12 @@ OpenAI.AuthenticationError = Errors.AuthenticationError;
 OpenAI.InternalServerError = Errors.InternalServerError;
 OpenAI.PermissionDeniedError = Errors.PermissionDeniedError;
 OpenAI.UnprocessableEntityError = Errors.UnprocessableEntityError;
+OpenAI.toFile = Uploads.toFile;
+OpenAI.fileFromPath = Uploads.fileFromPath;
 exports.OpenAIError = Errors.OpenAIError, exports.APIError = Errors.APIError, exports.APIConnectionError = Errors.APIConnectionError, exports.APIConnectionTimeoutError = Errors.APIConnectionTimeoutError, exports.APIUserAbortError = Errors.APIUserAbortError, exports.NotFoundError = Errors.NotFoundError, exports.ConflictError = Errors.ConflictError, exports.RateLimitError = Errors.RateLimitError, exports.BadRequestError = Errors.BadRequestError, exports.AuthenticationError = Errors.AuthenticationError, exports.InternalServerError = Errors.InternalServerError, exports.PermissionDeniedError = Errors.PermissionDeniedError, exports.UnprocessableEntityError = Errors.UnprocessableEntityError;
 exports.toFile = Uploads.toFile;
 exports.fileFromPath = Uploads.fileFromPath;
 (function (OpenAI) {
-    // Helper functions
-    OpenAI.toFile = Uploads.toFile;
-    OpenAI.fileFromPath = Uploads.fileFromPath;
     OpenAI.Page = Pagination.Page;
     OpenAI.CursorPage = Pagination.CursorPage;
     OpenAI.Completions = API.Completions;
@@ -45635,8 +45640,128 @@ exports.fileFromPath = Uploads.fileFromPath;
     OpenAI.ModelsPage = API.ModelsPage;
     OpenAI.FineTuning = API.FineTuning;
     OpenAI.Beta = API.Beta;
+    OpenAI.Batches = API.Batches;
+    OpenAI.BatchesPage = API.BatchesPage;
 })(OpenAI = exports.OpenAI || (exports.OpenAI = {}));
+/** API Client for interfacing with the Azure OpenAI API. */
+class AzureOpenAI extends OpenAI {
+    /**
+     * API Client for interfacing with the Azure OpenAI API.
+     *
+     * @param {string | undefined} [opts.apiVersion=process.env['OPENAI_API_VERSION'] ?? undefined]
+     * @param {string | undefined} [opts.endpoint=process.env['AZURE_OPENAI_ENDPOINT'] ?? undefined] - Your Azure endpoint, including the resource, e.g. `https://example-resource.azure.openai.com/`
+     * @param {string | undefined} [opts.apiKey=process.env['AZURE_OPENAI_API_KEY'] ?? undefined]
+     * @param {string | undefined} opts.deployment - A model deployment, if given, sets the base client URL to include `/deployments/{deployment}`.
+     * @param {string | null | undefined} [opts.organization=process.env['OPENAI_ORG_ID'] ?? null]
+     * @param {string} [opts.baseURL=process.env['OPENAI_BASE_URL']] - Sets the base URL for the API.
+     * @param {number} [opts.timeout=10 minutes] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {number} [opts.httpAgent] - An HTTP agent used to manage HTTP(s) connections.
+     * @param {Core.Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {Core.Headers} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Core.DefaultQuery} opts.defaultQuery - Default query parameters to include with every request to the API.
+     * @param {boolean} [opts.dangerouslyAllowBrowser=false] - By default, client-side use of this library is not allowed, as it risks exposing your secret API credentials to attackers.
+     */
+    constructor({ baseURL = Core.readEnv('OPENAI_BASE_URL'), apiKey = Core.readEnv('AZURE_OPENAI_API_KEY'), apiVersion = Core.readEnv('OPENAI_API_VERSION'), endpoint, deployment, azureADTokenProvider, dangerouslyAllowBrowser, ...opts } = {}) {
+        if (!apiVersion) {
+            throw new Errors.OpenAIError("The OPENAI_API_VERSION environment variable is missing or empty; either provide it, or instantiate the AzureOpenAI client with an apiVersion option, like new AzureOpenAI({ apiVersion: 'My API Version' }).");
+        }
+        if (typeof azureADTokenProvider === 'function') {
+            dangerouslyAllowBrowser = true;
+        }
+        if (!azureADTokenProvider && !apiKey) {
+            throw new Errors.OpenAIError('Missing credentials. Please pass one of `apiKey` and `azureADTokenProvider`, or set the `AZURE_OPENAI_API_KEY` environment variable.');
+        }
+        if (azureADTokenProvider && apiKey) {
+            throw new Errors.OpenAIError('The `apiKey` and `azureADTokenProvider` arguments are mutually exclusive; only one can be passed at a time.');
+        }
+        // define a sentinel value to avoid any typing issues
+        apiKey ?? (apiKey = API_KEY_SENTINEL);
+        opts.defaultQuery = { ...opts.defaultQuery, 'api-version': apiVersion };
+        if (!baseURL) {
+            if (!endpoint) {
+                endpoint = process.env['AZURE_OPENAI_ENDPOINT'];
+            }
+            if (!endpoint) {
+                throw new Errors.OpenAIError('Must provide one of the `baseURL` or `endpoint` arguments, or the `AZURE_OPENAI_ENDPOINT` environment variable');
+            }
+            baseURL = `${endpoint}/openai`;
+        }
+        else {
+            if (endpoint) {
+                throw new Errors.OpenAIError('baseURL and endpoint are mutually exclusive');
+            }
+        }
+        super({
+            apiKey,
+            baseURL,
+            ...opts,
+            ...(dangerouslyAllowBrowser !== undefined ? { dangerouslyAllowBrowser } : {}),
+        });
+        this.apiVersion = '';
+        this._azureADTokenProvider = azureADTokenProvider;
+        this.apiVersion = apiVersion;
+        this._deployment = deployment;
+    }
+    buildRequest(options) {
+        if (_deployments_endpoints.has(options.path) && options.method === 'post' && options.body !== undefined) {
+            if (!Core.isObj(options.body)) {
+                throw new Error('Expected request body to be an object');
+            }
+            const model = this._deployment || options.body['model'];
+            delete options.body['model'];
+            if (model !== undefined && !this.baseURL.includes('/deployments')) {
+                options.path = `/deployments/${model}${options.path}`;
+            }
+        }
+        return super.buildRequest(options);
+    }
+    async _getAzureADToken() {
+        if (typeof this._azureADTokenProvider === 'function') {
+            const token = await this._azureADTokenProvider();
+            if (!token || typeof token !== 'string') {
+                throw new Errors.OpenAIError(`Expected 'azureADTokenProvider' argument to return a string but it returned ${token}`);
+            }
+            return token;
+        }
+        return undefined;
+    }
+    authHeaders(opts) {
+        return {};
+    }
+    async prepareOptions(opts) {
+        if (opts.headers?.['Authorization'] || opts.headers?.['api-key']) {
+            return super.prepareOptions(opts);
+        }
+        const token = await this._getAzureADToken();
+        opts.headers ?? (opts.headers = {});
+        if (token) {
+            opts.headers['Authorization'] = `Bearer ${token}`;
+        }
+        else if (this.apiKey !== API_KEY_SENTINEL) {
+            opts.headers['api-key'] = this.apiKey;
+        }
+        else {
+            throw new Errors.OpenAIError('Unable to handle auth');
+        }
+        return super.prepareOptions(opts);
+    }
+}
+exports.AzureOpenAI = AzureOpenAI;
+const _deployments_endpoints = new Set([
+    '/completions',
+    '/chat/completions',
+    '/embeddings',
+    '/audio/transcriptions',
+    '/audio/translations',
+    '/audio/speech',
+    '/images/generations',
+    '/batches',
+]);
+const API_KEY_SENTINEL = '<Missing Key>';
+// ---------------------- End Azure ----------------------
 exports = module.exports = OpenAI;
+module.exports.AzureOpenAI = AzureOpenAI;
 exports["default"] = OpenAI;
 //# sourceMappingURL=index.js.map
 
@@ -46928,7 +47053,7 @@ _AssistantStream_addEvent = function _AssistantStream_addEvent(event) {
                     }
                     else {
                         snapshot.content[contentElement.index] = contentElement;
-                        //This is a new element
+                        // This is a new element
                         newContent.push(contentElement);
                     }
                 }
@@ -47417,6 +47542,39 @@ exports.ParsingToolFunction = ParsingToolFunction;
 
 /***/ }),
 
+/***/ 2626:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.allSettledWithThrow = void 0;
+/**
+ * Like `Promise.allSettled()` but throws an error if any promises are rejected.
+ */
+const allSettledWithThrow = async (promises) => {
+    const results = await Promise.allSettled(promises);
+    const rejected = results.filter((result) => result.status === 'rejected');
+    if (rejected.length) {
+        for (const result of rejected) {
+            console.error(result.reason);
+        }
+        throw new Error(`${rejected.length} promise(s) failed - see the above errors`);
+    }
+    // Note: TS was complaining about using `.filter().map()` here for some reason
+    const values = [];
+    for (const result of results) {
+        if (result.status === 'fulfilled') {
+            values.push(result.value);
+        }
+    }
+    return values;
+};
+exports.allSettledWithThrow = allSettledWithThrow;
+//# sourceMappingURL=Util.js.map
+
+/***/ }),
+
 /***/ 7964:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -47660,7 +47818,79 @@ exports.Translations = Translations;
 
 /***/ }),
 
-/***/ 3241:
+/***/ 341:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BatchesPage = exports.Batches = void 0;
+const resource_1 = __nccwpck_require__(9593);
+const core_1 = __nccwpck_require__(1798);
+const BatchesAPI = __importStar(__nccwpck_require__(341));
+const pagination_1 = __nccwpck_require__(7401);
+class Batches extends resource_1.APIResource {
+    /**
+     * Creates and executes a batch from an uploaded file of requests
+     */
+    create(body, options) {
+        return this._client.post('/batches', { body, ...options });
+    }
+    /**
+     * Retrieves a batch.
+     */
+    retrieve(batchId, options) {
+        return this._client.get(`/batches/${batchId}`, options);
+    }
+    list(query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/batches', BatchesPage, { query, ...options });
+    }
+    /**
+     * Cancels an in-progress batch.
+     */
+    cancel(batchId, options) {
+        return this._client.post(`/batches/${batchId}/cancel`, options);
+    }
+}
+exports.Batches = Batches;
+class BatchesPage extends pagination_1.CursorPage {
+}
+exports.BatchesPage = BatchesPage;
+(function (Batches) {
+    Batches.BatchesPage = BatchesAPI.BatchesPage;
+})(Batches = exports.Batches || (exports.Batches = {}));
+//# sourceMappingURL=batches.js.map
+
+/***/ }),
+
+/***/ 616:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -47693,14 +47923,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AssistantsPage = exports.Assistants = void 0;
 const resource_1 = __nccwpck_require__(9593);
 const core_1 = __nccwpck_require__(1798);
-const AssistantsAPI = __importStar(__nccwpck_require__(3241));
-const FilesAPI = __importStar(__nccwpck_require__(3535));
+const AssistantsAPI = __importStar(__nccwpck_require__(616));
 const pagination_1 = __nccwpck_require__(7401);
 class Assistants extends resource_1.APIResource {
-    constructor() {
-        super(...arguments);
-        this.files = new FilesAPI.Files(this._client);
-    }
     /**
      * Create an assistant with a model and instructions.
      */
@@ -47708,7 +47933,7 @@ class Assistants extends resource_1.APIResource {
         return this._client.post('/assistants', {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -47717,7 +47942,7 @@ class Assistants extends resource_1.APIResource {
     retrieve(assistantId, options) {
         return this._client.get(`/assistants/${assistantId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -47727,7 +47952,7 @@ class Assistants extends resource_1.APIResource {
         return this._client.post(`/assistants/${assistantId}`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     list(query = {}, options) {
@@ -47737,7 +47962,7 @@ class Assistants extends resource_1.APIResource {
         return this._client.getAPIList('/assistants', AssistantsPage, {
             query,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -47746,7 +47971,7 @@ class Assistants extends resource_1.APIResource {
     del(assistantId, options) {
         return this._client.delete(`/assistants/${assistantId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
 }
@@ -47756,98 +47981,8 @@ class AssistantsPage extends pagination_1.CursorPage {
 exports.AssistantsPage = AssistantsPage;
 (function (Assistants) {
     Assistants.AssistantsPage = AssistantsAPI.AssistantsPage;
-    Assistants.Files = FilesAPI.Files;
-    Assistants.AssistantFilesPage = FilesAPI.AssistantFilesPage;
 })(Assistants = exports.Assistants || (exports.Assistants = {}));
 //# sourceMappingURL=assistants.js.map
-
-/***/ }),
-
-/***/ 3535:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AssistantFilesPage = exports.Files = void 0;
-const resource_1 = __nccwpck_require__(9593);
-const core_1 = __nccwpck_require__(1798);
-const FilesAPI = __importStar(__nccwpck_require__(3535));
-const pagination_1 = __nccwpck_require__(7401);
-class Files extends resource_1.APIResource {
-    /**
-     * Create an assistant file by attaching a
-     * [File](https://platform.openai.com/docs/api-reference/files) to an
-     * [assistant](https://platform.openai.com/docs/api-reference/assistants).
-     */
-    create(assistantId, body, options) {
-        return this._client.post(`/assistants/${assistantId}/files`, {
-            body,
-            ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
-        });
-    }
-    /**
-     * Retrieves an AssistantFile.
-     */
-    retrieve(assistantId, fileId, options) {
-        return this._client.get(`/assistants/${assistantId}/files/${fileId}`, {
-            ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
-        });
-    }
-    list(assistantId, query = {}, options) {
-        if ((0, core_1.isRequestOptions)(query)) {
-            return this.list(assistantId, {}, query);
-        }
-        return this._client.getAPIList(`/assistants/${assistantId}/files`, AssistantFilesPage, {
-            query,
-            ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
-        });
-    }
-    /**
-     * Delete an assistant file.
-     */
-    del(assistantId, fileId, options) {
-        return this._client.delete(`/assistants/${assistantId}/files/${fileId}`, {
-            ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
-        });
-    }
-}
-exports.Files = Files;
-class AssistantFilesPage extends pagination_1.CursorPage {
-}
-exports.AssistantFilesPage = AssistantFilesPage;
-(function (Files) {
-    Files.AssistantFilesPage = FilesAPI.AssistantFilesPage;
-})(Files = exports.Files || (exports.Files = {}));
-//# sourceMappingURL=files.js.map
 
 /***/ }),
 
@@ -47883,12 +48018,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Beta = void 0;
 const resource_1 = __nccwpck_require__(9593);
-const AssistantsAPI = __importStar(__nccwpck_require__(3241));
+const AssistantsAPI = __importStar(__nccwpck_require__(616));
 const ChatAPI = __importStar(__nccwpck_require__(8691));
 const ThreadsAPI = __importStar(__nccwpck_require__(1931));
+const VectorStoresAPI = __importStar(__nccwpck_require__(5822));
 class Beta extends resource_1.APIResource {
     constructor() {
         super(...arguments);
+        this.vectorStores = new VectorStoresAPI.VectorStores(this._client);
         this.chat = new ChatAPI.Chat(this._client);
         this.assistants = new AssistantsAPI.Assistants(this._client);
         this.threads = new ThreadsAPI.Threads(this._client);
@@ -47896,6 +48033,8 @@ class Beta extends resource_1.APIResource {
 }
 exports.Beta = Beta;
 (function (Beta) {
+    Beta.VectorStores = VectorStoresAPI.VectorStores;
+    Beta.VectorStoresPage = VectorStoresAPI.VectorStoresPage;
     Beta.Chat = ChatAPI.Chat;
     Beta.Assistants = AssistantsAPI.Assistants;
     Beta.AssistantsPage = AssistantsAPI.AssistantsPage;
@@ -47998,74 +48137,7 @@ exports.Completions = Completions;
 
 /***/ }),
 
-/***/ 9569:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MessageFilesPage = exports.Files = void 0;
-const resource_1 = __nccwpck_require__(9593);
-const core_1 = __nccwpck_require__(1798);
-const FilesAPI = __importStar(__nccwpck_require__(9569));
-const pagination_1 = __nccwpck_require__(7401);
-class Files extends resource_1.APIResource {
-    /**
-     * Retrieves a message file.
-     */
-    retrieve(threadId, messageId, fileId, options) {
-        return this._client.get(`/threads/${threadId}/messages/${messageId}/files/${fileId}`, {
-            ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
-        });
-    }
-    list(threadId, messageId, query = {}, options) {
-        if ((0, core_1.isRequestOptions)(query)) {
-            return this.list(threadId, messageId, {}, query);
-        }
-        return this._client.getAPIList(`/threads/${threadId}/messages/${messageId}/files`, MessageFilesPage, {
-            query,
-            ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
-        });
-    }
-}
-exports.Files = Files;
-class MessageFilesPage extends pagination_1.CursorPage {
-}
-exports.MessageFilesPage = MessageFilesPage;
-(function (Files) {
-    Files.MessageFilesPage = FilesAPI.MessageFilesPage;
-})(Files = exports.Files || (exports.Files = {}));
-//# sourceMappingURL=files.js.map
-
-/***/ }),
-
-/***/ 4884:
+/***/ 1787:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -48098,14 +48170,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MessagesPage = exports.Messages = void 0;
 const resource_1 = __nccwpck_require__(9593);
 const core_1 = __nccwpck_require__(1798);
-const MessagesAPI = __importStar(__nccwpck_require__(4884));
-const FilesAPI = __importStar(__nccwpck_require__(9569));
+const MessagesAPI = __importStar(__nccwpck_require__(1787));
 const pagination_1 = __nccwpck_require__(7401);
 class Messages extends resource_1.APIResource {
-    constructor() {
-        super(...arguments);
-        this.files = new FilesAPI.Files(this._client);
-    }
     /**
      * Create a message.
      */
@@ -48113,7 +48180,7 @@ class Messages extends resource_1.APIResource {
         return this._client.post(`/threads/${threadId}/messages`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48122,7 +48189,7 @@ class Messages extends resource_1.APIResource {
     retrieve(threadId, messageId, options) {
         return this._client.get(`/threads/${threadId}/messages/${messageId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48132,7 +48199,7 @@ class Messages extends resource_1.APIResource {
         return this._client.post(`/threads/${threadId}/messages/${messageId}`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     list(threadId, query = {}, options) {
@@ -48142,7 +48209,16 @@ class Messages extends resource_1.APIResource {
         return this._client.getAPIList(`/threads/${threadId}/messages`, MessagesPage, {
             query,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Deletes a message.
+     */
+    del(threadId, messageId, options) {
+        return this._client.delete(`/threads/${threadId}/messages/${messageId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
 }
@@ -48152,8 +48228,6 @@ class MessagesPage extends pagination_1.CursorPage {
 exports.MessagesPage = MessagesPage;
 (function (Messages) {
     Messages.MessagesPage = MessagesAPI.MessagesPage;
-    Messages.Files = FilesAPI.Files;
-    Messages.MessageFilesPage = FilesAPI.MessageFilesPage;
 })(Messages = exports.Messages || (exports.Messages = {}));
 //# sourceMappingURL=messages.js.map
 
@@ -48206,7 +48280,7 @@ class Runs extends resource_1.APIResource {
         return this._client.post(`/threads/${threadId}/runs`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
             stream: body.stream ?? false,
         });
     }
@@ -48216,7 +48290,7 @@ class Runs extends resource_1.APIResource {
     retrieve(threadId, runId, options) {
         return this._client.get(`/threads/${threadId}/runs/${runId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48226,7 +48300,7 @@ class Runs extends resource_1.APIResource {
         return this._client.post(`/threads/${threadId}/runs/${runId}`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     list(threadId, query = {}, options) {
@@ -48236,7 +48310,7 @@ class Runs extends resource_1.APIResource {
         return this._client.getAPIList(`/threads/${threadId}/runs`, RunsPage, {
             query,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48245,7 +48319,7 @@ class Runs extends resource_1.APIResource {
     cancel(threadId, runId, options) {
         return this._client.post(`/threads/${threadId}/runs/${runId}/cancel`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48302,6 +48376,7 @@ class Runs extends resource_1.APIResource {
                     break;
                 //We return the run in any terminal state.
                 case 'requires_action':
+                case 'incomplete':
                 case 'cancelled':
                 case 'completed':
                 case 'failed':
@@ -48320,7 +48395,7 @@ class Runs extends resource_1.APIResource {
         return this._client.post(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
             stream: body.stream ?? false,
         });
     }
@@ -48397,7 +48472,7 @@ class Steps extends resource_1.APIResource {
     retrieve(threadId, runId, stepId, options) {
         return this._client.get(`/threads/${threadId}/runs/${runId}/steps/${stepId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     list(threadId, runId, query = {}, options) {
@@ -48407,7 +48482,7 @@ class Steps extends resource_1.APIResource {
         return this._client.getAPIList(`/threads/${threadId}/runs/${runId}/steps`, RunStepsPage, {
             query,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
 }
@@ -48456,7 +48531,7 @@ exports.Threads = void 0;
 const resource_1 = __nccwpck_require__(9593);
 const core_1 = __nccwpck_require__(1798);
 const AssistantStream_1 = __nccwpck_require__(7514);
-const MessagesAPI = __importStar(__nccwpck_require__(4884));
+const MessagesAPI = __importStar(__nccwpck_require__(1787));
 const RunsAPI = __importStar(__nccwpck_require__(3187));
 class Threads extends resource_1.APIResource {
     constructor() {
@@ -48471,7 +48546,7 @@ class Threads extends resource_1.APIResource {
         return this._client.post('/threads', {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48480,7 +48555,7 @@ class Threads extends resource_1.APIResource {
     retrieve(threadId, options) {
         return this._client.get(`/threads/${threadId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48490,7 +48565,7 @@ class Threads extends resource_1.APIResource {
         return this._client.post(`/threads/${threadId}`, {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     /**
@@ -48499,14 +48574,14 @@ class Threads extends resource_1.APIResource {
     del(threadId, options) {
         return this._client.delete(`/threads/${threadId}`, {
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
         });
     }
     createAndRun(body, options) {
         return this._client.post('/threads/runs', {
             body,
             ...options,
-            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
             stream: body.stream ?? false,
         });
     }
@@ -48534,6 +48609,404 @@ exports.Threads = Threads;
     Threads.MessagesPage = MessagesAPI.MessagesPage;
 })(Threads = exports.Threads || (exports.Threads = {}));
 //# sourceMappingURL=threads.js.map
+
+/***/ }),
+
+/***/ 3922:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VectorStoreFilesPage = exports.FileBatches = void 0;
+const resource_1 = __nccwpck_require__(9593);
+const core_1 = __nccwpck_require__(1798);
+const core_2 = __nccwpck_require__(1798);
+const Util_1 = __nccwpck_require__(2626);
+const files_1 = __nccwpck_require__(9180);
+Object.defineProperty(exports, "VectorStoreFilesPage", ({ enumerable: true, get: function () { return files_1.VectorStoreFilesPage; } }));
+class FileBatches extends resource_1.APIResource {
+    /**
+     * Create a vector store file batch.
+     */
+    create(vectorStoreId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/file_batches`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a vector store file batch.
+     */
+    retrieve(vectorStoreId, batchId, options) {
+        return this._client.get(`/vector_stores/${vectorStoreId}/file_batches/${batchId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Cancel a vector store file batch. This attempts to cancel the processing of
+     * files in this batch as soon as possible.
+     */
+    cancel(vectorStoreId, batchId, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/file_batches/${batchId}/cancel`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Create a vector store batch and poll until all files have been processed.
+     */
+    async createAndPoll(vectorStoreId, body, options) {
+        const batch = await this.create(vectorStoreId, body);
+        return await this.poll(vectorStoreId, batch.id, options);
+    }
+    listFiles(vectorStoreId, batchId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.listFiles(vectorStoreId, batchId, {}, query);
+        }
+        return this._client.getAPIList(`/vector_stores/${vectorStoreId}/file_batches/${batchId}/files`, files_1.VectorStoreFilesPage, { query, ...options, headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers } });
+    }
+    /**
+     * Wait for the given file batch to be processed.
+     *
+     * Note: this will return even if one of the files failed to process, you need to
+     * check batch.file_counts.failed_count to handle this case.
+     */
+    async poll(vectorStoreId, batchId, options) {
+        const headers = { ...options?.headers, 'X-Stainless-Poll-Helper': 'true' };
+        if (options?.pollIntervalMs) {
+            headers['X-Stainless-Custom-Poll-Interval'] = options.pollIntervalMs.toString();
+        }
+        while (true) {
+            const { data: batch, response } = await this.retrieve(vectorStoreId, batchId, {
+                ...options,
+                headers,
+            }).withResponse();
+            switch (batch.status) {
+                case 'in_progress':
+                    let sleepInterval = 5000;
+                    if (options?.pollIntervalMs) {
+                        sleepInterval = options.pollIntervalMs;
+                    }
+                    else {
+                        const headerInterval = response.headers.get('openai-poll-after-ms');
+                        if (headerInterval) {
+                            const headerIntervalMs = parseInt(headerInterval);
+                            if (!isNaN(headerIntervalMs)) {
+                                sleepInterval = headerIntervalMs;
+                            }
+                        }
+                    }
+                    await (0, core_2.sleep)(sleepInterval);
+                    break;
+                case 'failed':
+                case 'cancelled':
+                case 'completed':
+                    return batch;
+            }
+        }
+    }
+    /**
+     * Uploads the given files concurrently and then creates a vector store file batch.
+     *
+     * The concurrency limit is configurable using the `maxConcurrency` parameter.
+     */
+    async uploadAndPoll(vectorStoreId, { files, fileIds = [] }, options) {
+        if (files === null || files.length == 0) {
+            throw new Error('No files provided to process.');
+        }
+        const configuredConcurrency = options?.maxConcurrency ?? 5;
+        //We cap the number of workers at the number of files (so we don't start any unnecessary workers)
+        const concurrencyLimit = Math.min(configuredConcurrency, files.length);
+        const client = this._client;
+        const fileIterator = files.values();
+        const allFileIds = [...fileIds];
+        //This code is based on this design. The libraries don't accommodate our environment limits.
+        // https://stackoverflow.com/questions/40639432/what-is-the-best-way-to-limit-concurrency-when-using-es6s-promise-all
+        async function processFiles(iterator) {
+            for (let item of iterator) {
+                const fileObj = await client.files.create({ file: item, purpose: 'assistants' }, options);
+                allFileIds.push(fileObj.id);
+            }
+        }
+        //Start workers to process results
+        const workers = Array(concurrencyLimit).fill(fileIterator).map(processFiles);
+        //Wait for all processing to complete.
+        await (0, Util_1.allSettledWithThrow)(workers);
+        return await this.createAndPoll(vectorStoreId, {
+            file_ids: allFileIds,
+        });
+    }
+}
+exports.FileBatches = FileBatches;
+(function (FileBatches) {
+})(FileBatches = exports.FileBatches || (exports.FileBatches = {}));
+//# sourceMappingURL=file-batches.js.map
+
+/***/ }),
+
+/***/ 9180:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VectorStoreFilesPage = exports.Files = void 0;
+const resource_1 = __nccwpck_require__(9593);
+const core_1 = __nccwpck_require__(1798);
+const core_2 = __nccwpck_require__(1798);
+const FilesAPI = __importStar(__nccwpck_require__(9180));
+const pagination_1 = __nccwpck_require__(7401);
+class Files extends resource_1.APIResource {
+    /**
+     * Create a vector store file by attaching a
+     * [File](https://platform.openai.com/docs/api-reference/files) to a
+     * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object).
+     */
+    create(vectorStoreId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}/files`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a vector store file.
+     */
+    retrieve(vectorStoreId, fileId, options) {
+        return this._client.get(`/vector_stores/${vectorStoreId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(vectorStoreId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(vectorStoreId, {}, query);
+        }
+        return this._client.getAPIList(`/vector_stores/${vectorStoreId}/files`, VectorStoreFilesPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Delete a vector store file. This will remove the file from the vector store but
+     * the file itself will not be deleted. To delete the file, use the
+     * [delete file](https://platform.openai.com/docs/api-reference/files/delete)
+     * endpoint.
+     */
+    del(vectorStoreId, fileId, options) {
+        return this._client.delete(`/vector_stores/${vectorStoreId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Attach a file to the given vector store and wait for it to be processed.
+     */
+    async createAndPoll(vectorStoreId, body, options) {
+        const file = await this.create(vectorStoreId, body, options);
+        return await this.poll(vectorStoreId, file.id, options);
+    }
+    /**
+     * Wait for the vector store file to finish processing.
+     *
+     * Note: this will return even if the file failed to process, you need to check
+     * file.last_error and file.status to handle these cases
+     */
+    async poll(vectorStoreId, fileId, options) {
+        const headers = { ...options?.headers, 'X-Stainless-Poll-Helper': 'true' };
+        if (options?.pollIntervalMs) {
+            headers['X-Stainless-Custom-Poll-Interval'] = options.pollIntervalMs.toString();
+        }
+        while (true) {
+            const fileResponse = await this.retrieve(vectorStoreId, fileId, {
+                ...options,
+                headers,
+            }).withResponse();
+            const file = fileResponse.data;
+            switch (file.status) {
+                case 'in_progress':
+                    let sleepInterval = 5000;
+                    if (options?.pollIntervalMs) {
+                        sleepInterval = options.pollIntervalMs;
+                    }
+                    else {
+                        const headerInterval = fileResponse.response.headers.get('openai-poll-after-ms');
+                        if (headerInterval) {
+                            const headerIntervalMs = parseInt(headerInterval);
+                            if (!isNaN(headerIntervalMs)) {
+                                sleepInterval = headerIntervalMs;
+                            }
+                        }
+                    }
+                    await (0, core_2.sleep)(sleepInterval);
+                    break;
+                case 'failed':
+                case 'completed':
+                    return file;
+            }
+        }
+    }
+    /**
+     * Upload a file to the `files` API and then attach it to the given vector store.
+     *
+     * Note the file will be asynchronously processed (you can use the alternative
+     * polling helper method to wait for processing to complete).
+     */
+    async upload(vectorStoreId, file, options) {
+        const fileInfo = await this._client.files.create({ file: file, purpose: 'assistants' }, options);
+        return this.create(vectorStoreId, { file_id: fileInfo.id }, options);
+    }
+    /**
+     * Add a file to a vector store and poll until processing is complete.
+     */
+    async uploadAndPoll(vectorStoreId, file, options) {
+        const fileInfo = await this.upload(vectorStoreId, file, options);
+        return await this.poll(vectorStoreId, fileInfo.id, options);
+    }
+}
+exports.Files = Files;
+class VectorStoreFilesPage extends pagination_1.CursorPage {
+}
+exports.VectorStoreFilesPage = VectorStoreFilesPage;
+(function (Files) {
+    Files.VectorStoreFilesPage = FilesAPI.VectorStoreFilesPage;
+})(Files = exports.Files || (exports.Files = {}));
+//# sourceMappingURL=files.js.map
+
+/***/ }),
+
+/***/ 5822:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VectorStoresPage = exports.VectorStores = void 0;
+const resource_1 = __nccwpck_require__(9593);
+const core_1 = __nccwpck_require__(1798);
+const VectorStoresAPI = __importStar(__nccwpck_require__(5822));
+const FileBatchesAPI = __importStar(__nccwpck_require__(3922));
+const FilesAPI = __importStar(__nccwpck_require__(9180));
+const pagination_1 = __nccwpck_require__(7401);
+class VectorStores extends resource_1.APIResource {
+    constructor() {
+        super(...arguments);
+        this.files = new FilesAPI.Files(this._client);
+        this.fileBatches = new FileBatchesAPI.FileBatches(this._client);
+    }
+    /**
+     * Create a vector store.
+     */
+    create(body, options) {
+        return this._client.post('/vector_stores', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a vector store.
+     */
+    retrieve(vectorStoreId, options) {
+        return this._client.get(`/vector_stores/${vectorStoreId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a vector store.
+     */
+    update(vectorStoreId, body, options) {
+        return this._client.post(`/vector_stores/${vectorStoreId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    list(query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this._client.getAPIList('/vector_stores', VectorStoresPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+    /**
+     * Delete a vector store.
+     */
+    del(vectorStoreId, options) {
+        return this._client.delete(`/vector_stores/${vectorStoreId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v2', ...options?.headers },
+        });
+    }
+}
+exports.VectorStores = VectorStores;
+class VectorStoresPage extends pagination_1.CursorPage {
+}
+exports.VectorStoresPage = VectorStoresPage;
+(function (VectorStores) {
+    VectorStores.VectorStoresPage = VectorStoresAPI.VectorStoresPage;
+    VectorStores.Files = FilesAPI.Files;
+    VectorStores.VectorStoreFilesPage = FilesAPI.VectorStoreFilesPage;
+    VectorStores.FileBatches = FileBatchesAPI.FileBatches;
+})(VectorStores = exports.VectorStores || (exports.VectorStores = {}));
+//# sourceMappingURL=vector-stores.js.map
 
 /***/ }),
 
@@ -48612,11 +49085,11 @@ exports.Completions = Completions;
 
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Completions = exports.Chat = void 0;
-var chat_1 = __nccwpck_require__(7670);
-Object.defineProperty(exports, "Chat", ({ enumerable: true, get: function () { return chat_1.Chat; } }));
+exports.Chat = exports.Completions = void 0;
 var completions_1 = __nccwpck_require__(2875);
 Object.defineProperty(exports, "Completions", ({ enumerable: true, get: function () { return completions_1.Completions; } }));
+var chat_1 = __nccwpck_require__(7670);
+Object.defineProperty(exports, "Chat", ({ enumerable: true, get: function () { return chat_1.Chat; } }));
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -48706,14 +49179,18 @@ const core_3 = __nccwpck_require__(1798);
 const pagination_1 = __nccwpck_require__(7401);
 class Files extends resource_1.APIResource {
     /**
-     * Upload a file that can be used across various endpoints. The size of all the
-     * files uploaded by one organization can be up to 100 GB.
+     * Upload a file that can be used across various endpoints. Individual files can be
+     * up to 512 MB, and the size of all files uploaded by one organization can be up
+     * to 100 GB.
      *
-     * The size of individual files can be a maximum of 512 MB or 2 million tokens for
-     * Assistants. See the
-     * [Assistants Tools guide](https://platform.openai.com/docs/assistants/tools) to
-     * learn more about the types of files supported. The Fine-tuning API only supports
-     * `.jsonl` files.
+     * The Assistants API supports files up to 2 million tokens and of specific file
+     * types. See the
+     * [Assistants Tools guide](https://platform.openai.com/docs/assistants/tools) for
+     * details.
+     *
+     * The Fine-tuning API only supports `.jsonl` files.
+     *
+     * The Batch API only supports `.jsonl` files up to 100 MB in size.
      *
      * Please [contact us](https://help.openai.com/) if you need to increase these
      * storage limits.
@@ -48821,7 +49298,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FineTuning = void 0;
 const resource_1 = __nccwpck_require__(9593);
-const JobsAPI = __importStar(__nccwpck_require__(4900));
+const JobsAPI = __importStar(__nccwpck_require__(816));
 class FineTuning extends resource_1.APIResource {
     constructor() {
         super(...arguments);
@@ -48838,7 +49315,61 @@ exports.FineTuning = FineTuning;
 
 /***/ }),
 
-/***/ 4900:
+/***/ 3104:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FineTuningJobCheckpointsPage = exports.Checkpoints = void 0;
+const resource_1 = __nccwpck_require__(9593);
+const core_1 = __nccwpck_require__(1798);
+const CheckpointsAPI = __importStar(__nccwpck_require__(3104));
+const pagination_1 = __nccwpck_require__(7401);
+class Checkpoints extends resource_1.APIResource {
+    list(fineTuningJobId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(fineTuningJobId, {}, query);
+        }
+        return this._client.getAPIList(`/fine_tuning/jobs/${fineTuningJobId}/checkpoints`, FineTuningJobCheckpointsPage, { query, ...options });
+    }
+}
+exports.Checkpoints = Checkpoints;
+class FineTuningJobCheckpointsPage extends pagination_1.CursorPage {
+}
+exports.FineTuningJobCheckpointsPage = FineTuningJobCheckpointsPage;
+(function (Checkpoints) {
+    Checkpoints.FineTuningJobCheckpointsPage = CheckpointsAPI.FineTuningJobCheckpointsPage;
+})(Checkpoints = exports.Checkpoints || (exports.Checkpoints = {}));
+//# sourceMappingURL=checkpoints.js.map
+
+/***/ }),
+
+/***/ 816:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -48871,9 +49402,14 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FineTuningJobEventsPage = exports.FineTuningJobsPage = exports.Jobs = void 0;
 const resource_1 = __nccwpck_require__(9593);
 const core_1 = __nccwpck_require__(1798);
-const JobsAPI = __importStar(__nccwpck_require__(4900));
+const JobsAPI = __importStar(__nccwpck_require__(816));
+const CheckpointsAPI = __importStar(__nccwpck_require__(3104));
 const pagination_1 = __nccwpck_require__(7401);
 class Jobs extends resource_1.APIResource {
+    constructor() {
+        super(...arguments);
+        this.checkpoints = new CheckpointsAPI.Checkpoints(this._client);
+    }
     /**
      * Creates a fine-tuning job which begins the process of creating a new model from
      * a given dataset.
@@ -48926,6 +49462,8 @@ exports.FineTuningJobEventsPage = FineTuningJobEventsPage;
 (function (Jobs) {
     Jobs.FineTuningJobsPage = JobsAPI.FineTuningJobsPage;
     Jobs.FineTuningJobEventsPage = JobsAPI.FineTuningJobEventsPage;
+    Jobs.Checkpoints = CheckpointsAPI.Checkpoints;
+    Jobs.FineTuningJobCheckpointsPage = CheckpointsAPI.FineTuningJobCheckpointsPage;
 })(Jobs = exports.Jobs || (exports.Jobs = {}));
 //# sourceMappingURL=jobs.js.map
 
@@ -48989,11 +49527,14 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Moderations = exports.Models = exports.ModelsPage = exports.Images = exports.FineTuning = exports.Files = exports.FileObjectsPage = exports.Embeddings = exports.Completions = exports.Beta = exports.Audio = void 0;
+exports.Moderations = exports.Models = exports.ModelsPage = exports.Images = exports.FineTuning = exports.Files = exports.FileObjectsPage = exports.Embeddings = exports.Completions = exports.Beta = exports.Batches = exports.BatchesPage = exports.Audio = void 0;
 __exportStar(__nccwpck_require__(8240), exports);
 __exportStar(__nccwpck_require__(4866), exports);
 var audio_1 = __nccwpck_require__(6376);
 Object.defineProperty(exports, "Audio", ({ enumerable: true, get: function () { return audio_1.Audio; } }));
+var batches_1 = __nccwpck_require__(341);
+Object.defineProperty(exports, "BatchesPage", ({ enumerable: true, get: function () { return batches_1.BatchesPage; } }));
+Object.defineProperty(exports, "Batches", ({ enumerable: true, get: function () { return batches_1.Batches; } }));
 var beta_1 = __nccwpck_require__(853);
 Object.defineProperty(exports, "Beta", ({ enumerable: true, get: function () { return beta_1.Beta; } }));
 var completions_1 = __nccwpck_require__(9327);
@@ -49741,7 +50282,7 @@ const addFormValue = async (form, key, value) => {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.VERSION = void 0;
-exports.VERSION = '4.33.0'; // x-release-please-version
+exports.VERSION = '4.47.2'; // x-release-please-version
 //# sourceMappingURL=version.js.map
 
 /***/ }),
