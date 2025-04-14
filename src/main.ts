@@ -150,7 +150,7 @@ async function sendAssistantPrompt(prompt: string) {
   const run = await openai.beta.threads.runs.createAndPoll(
     thread.id, {
     assistant_id: assistantId,
-    additional_instructions: 'Only respond with code as plain text without code block syntax around it.',
+    // additional_instructions: 'Please address the user as Jane Doe. The user has a premium account.',
   });
 
   console.log('Run finished with status: ' + run.status);
