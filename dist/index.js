@@ -169,7 +169,7 @@ function sendAssistantPrompt(prompt) {
         console.log('Created thread with Id: ' + threadId);
         const run = yield openai.beta.threads.runs.createAndPoll(thread.id, {
             assistant_id: assistantId,
-            additional_instructions: 'Only respond with code as plain text without code block syntax around it.',
+            // additional_instructions: 'Please address the user as Jane Doe. The user has a premium account.',
         });
         console.log('Run finished with status: ' + run.status);
         if (run.status == 'completed') {
